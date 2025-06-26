@@ -11,7 +11,7 @@ resource "aws_instance" "tf_ec2_instance" {
   ami                         = "ami-020cba7c55df1f615" # ubuntu image in us-east-1
   instance_type               = "t2.micro"
   associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.tf_ec2_sg.id] # attach security group
+  vpc_security_group_ids      = [module.tf_module_ec2_sg.security_group_id] # attach security group
   key_name                    = "terraform-ec2"
   depends_on                  = [aws_s3_bucket.tf_s3_bucket, aws_db_instance.tf_rds_instance] # ensure RDS is created before EC2  
   user_data                   = <<-EOF
@@ -44,44 +44,66 @@ resource "aws_instance" "tf_ec2_instance" {
 
 }
 
-# security group
-resource "aws_security_group" "tf_ec2_sg" {
-  name        = "nodejs-server-sg"
-  description = "Allow SSH and HTTP traffic"
-  vpc_id      = "vpc-068f2b9c0e8685f0e"
+# # security group
+# resource "aws_security_group" "tf_ec2_sg" {
+#   name        = "nodejs-server-sg"
+#   description = "Allow SSH and HTTP traffic"
+#   vpc_id      = "vpc-068f2b9c0e8685f0e"
 
-  ingress {
-    description = "TLS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] #allow all IPs
-  }
+#   ingress {
+#     description = "TLS from VPC"
+#     from_port   = 443
+#     to_port     = 443
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"] #allow all IPs
+#   }
 
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   ingress {
+#     description = "SSH"
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  ingress {
-    description = "NodeJS"
-    from_port   = 3000 #for nodejs server
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   ingress {
+#     description = "NodeJS"
+#     from_port   = 3000 #for nodejs server
+#     to_port     = 3000
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1" # -1 means all protocols
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+#   egress {
+#     description = "Allow all outbound traffic"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1" # -1 means all protocols
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
+
+#ec2 security group module
+module "tf_module_ec2_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.3.0"
+  vpc_id = "vpc-068f2b9c0e8685f0e" # replace with your VPC ID
+  name = "tf_module_ec2_sg"
+
+  ingress_rules = ["https-443-tcp", "ssh-tcp"]
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 3000
+      to_port     = 3000
+      protocol    = "tcp"
+      description = "NodeJS server"
+      cidr_blocks = "0.0.0.0/0"
+    }
+  ]
+
+  egress_rules = ["all-all"]
 }
+
 
 output "ec2_public_ip" {
   value = "ssh -i ~/.ssh/terraform-ec2.pem ubuntu@${aws_instance.tf_ec2_instance.public_ip}"

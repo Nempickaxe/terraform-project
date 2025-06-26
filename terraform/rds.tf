@@ -35,7 +35,7 @@ resource "aws_security_group" "tf_rds_sg" {
     to_port         = 3306
     protocol        = "tcp"
     cidr_blocks     = ["171.76.86.6/32"]                # replace with your local IP in CIDR notation
-    security_groups = [aws_security_group.tf_ec2_sg.id] # allow traffic from EC2 security group
+    security_groups = [module.tf_module_ec2_sg.security_group_id] # allow traffic from EC2 security group
   }
 
   egress {
@@ -48,20 +48,20 @@ resource "aws_security_group" "tf_rds_sg" {
 }
 
 locals {
-    rds_endpoint = element(split(":", aws_db_instance.tf_rds_instance.endpoint), 0)
+  rds_endpoint = element(split(":", aws_db_instance.tf_rds_instance.endpoint), 0)
 }
 
 output "rds_endpoint" {
   value = local.rds_endpoint
-  
+
 }
 
 output "rds_username" {
   value = aws_db_instance.tf_rds_instance.username
-  
+
 }
 
 output "db_name" {
   value = aws_db_instance.tf_rds_instance.db_name
-  
+
 }
