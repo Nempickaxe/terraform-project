@@ -90,13 +90,20 @@ module "tf_module_ec2_sg" {
   vpc_id = "vpc-068f2b9c0e8685f0e" # replace with your VPC ID
   name = "tf_module_ec2_sg"
 
-  ingress_rules = ["https-443-tcp", "ssh-tcp"]
   ingress_with_cidr_blocks = [
     {
       from_port   = 3000
       to_port     = 3000
       protocol    = "tcp"
       description = "NodeJS server"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      rule = "https-443-tcp"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      rule = "ssh-tcp"
       cidr_blocks = "0.0.0.0/0"
     }
   ]
