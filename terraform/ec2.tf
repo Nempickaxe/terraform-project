@@ -13,7 +13,7 @@ resource "aws_instance" "tf_ec2_instance" {
   associate_public_ip_address = true
   vpc_security_group_ids      = [aws_security_group.tf_ec2_sg.id] # attach security group
   key_name                    = "terraform-ec2"
-  depends_on                  = [aws_s3_bucket.tf_s3_bucket]
+  depends_on                  = [aws_s3_bucket.tf_s3_bucket, aws_db_instance.tf_rds_instance] # ensure RDS is created before EC2  
   user_data                   = <<-EOF
                 #!/bin/bash
                 
@@ -25,7 +25,7 @@ resource "aws_instance" "tf_ec2_instance" {
                 sudo apt install -y nodejs npm
 
                 # edit env vars
-                echo "DB_HOST=${aws_db_instance.tf_rds_instance.endpoint}" | sudo tee -a .env
+                echo "DB_HOST=${local.rds_endpoint}" | sudo tee -a .env
                 echo "DB_USER=${aws_db_instance.tf_rds_instance.username}" | sudo tee -a .env
                 echo "DB_PASS=${aws_db_instance.tf_rds_instance.password}" | sudo tee -a .env
                 echo "DB_NAME=${aws_db_instance.tf_rds_instance.db_name}" | sudo tee -a .env

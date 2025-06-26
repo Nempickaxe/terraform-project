@@ -46,3 +46,22 @@ resource "aws_security_group" "tf_rds_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+locals {
+    rds_endpoint = element(split(":", aws_db_instance.tf_rds_instance.endpoint), 0)
+}
+
+output "rds_endpoint" {
+  value = local.rds_endpoint
+  
+}
+
+output "rds_username" {
+  value = aws_db_instance.tf_rds_instance.username
+  
+}
+
+output "db_name" {
+  value = aws_db_instance.tf_rds_instance.db_name
+  
+}
